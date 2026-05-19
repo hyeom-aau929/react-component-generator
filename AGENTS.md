@@ -35,7 +35,7 @@ bun run preview                # 빌드 결과물 미리보기
 
 - `src/components/`에 CSS import 사용 금지 — 인라인 style 객체만 허용.
 - react-live 샌드박스 내 컴포넌트에 `import` 문 작성 금지.
-- 컴포넌트 상태(GeneratedComponent[])를 localStorage/서버에 저장하지 마라 — 세션 메모리 전용 설계.
+- 컴포넌트 상태(GeneratedComponent[])를 서버에 저장하지 마라. localStorage는 허용 (키: `rcg-components`).
 
 ## Project Context
 
