@@ -1,7 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
-import type { GeneratedComponent, Provider } from '../types';
+import type { GeneratedComponent, Provider, StreamingState } from '../types';
+import { parseStreamChunk, buildComponent } from './streamUtils';
 
 const STORAGE_KEY = 'rcg-components';
+
+function createComponentId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+}
 
 function isValidComponent(c: unknown): c is Omit<GeneratedComponent, 'createdAt'> & { createdAt: string } {
   return (
@@ -18,7 +23,9 @@ interface UseComponentGeneratorReturn {
   components: GeneratedComponent[];
   isLoading: boolean;
   error: string | null;
+  streamingState: StreamingState | null;
   generate: (prompt: string, apiKey: string | undefined, provider: Provider) => Promise<void>;
+  generateStream: (prompt: string, apiKey: string | undefined, provider: Provider) => Promise<void>;
   removeComponent: (id: string) => void;
   clearAll: () => void;
 }
@@ -39,6 +46,7 @@ export function useComponentGenerator(): UseComponentGeneratorReturn {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [streamingState, setStreamingState] = useState<StreamingState | null>(null);
 
   useEffect(() => {
     try {
@@ -65,17 +73,69 @@ export function useComponentGenerator(): UseComponentGeneratorReturn {
         throw new Error(data.error || 'Failed to generate component');
       }
 
-      const newComponent: GeneratedComponent = {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        prompt,
-        code: data.code,
-        createdAt: new Date(),
-      };
-
-      setComponents((prev) => [newComponent, ...prev]);
+      setComponents((prev) => [
+        buildComponent(createComponentId(), prompt, data.code),
+        ...prev,
+      ]);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const generateStream = useCallback(async (
+    prompt: string,
+    apiKey: string | undefined,
+    provider: Provider
+  ) => {
+    const id = createComponentId();
+
+    setIsLoading(true);
+    setError(null);
+    setStreamingState({ id, prompt, streamingCode: '', isStreaming: true, createdAt: new Date() });
+
+    try {
+      const res = await fetch('/api/generate/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, ...(apiKey && { apiKey }), provider }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to generate component');
+      }
+
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const { events, remaining } = parseStreamChunk(buffer, decoder.decode(value, { stream: true }));
+        buffer = remaining;
+
+        for (const event of events) {
+          if (event.type === 'delta') {
+            setStreamingState((prev) =>
+              prev ? { ...prev, streamingCode: prev.streamingCode + event.text } : prev
+            );
+          } else if (event.type === 'done') {
+            setComponents((prev) => [buildComponent(id, prompt, event.code), ...prev]);
+            setStreamingState(null);
+          } else if (event.type === 'error') {
+            throw new Error(event.message);
+          }
+        }
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setError(message);
+      setStreamingState(null);
     } finally {
       setIsLoading(false);
     }
@@ -89,5 +149,14 @@ export function useComponentGenerator(): UseComponentGeneratorReturn {
     setComponents([]);
   }, []);
 
-  return { components, isLoading, error, generate, removeComponent, clearAll };
+  return {
+    components,
+    isLoading,
+    error,
+    streamingState,
+    generate,
+    generateStream,
+    removeComponent,
+    clearAll,
+  };
 }

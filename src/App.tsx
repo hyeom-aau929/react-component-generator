@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { PromptInput } from './components/PromptInput';
 import { ComponentCard } from './components/ComponentCard';
+import { StreamingCard } from './components/StreamingCard';
 import { useComponentGenerator } from './hooks/useComponentGenerator';
 import type { Provider } from './types';
 import './App.css';
@@ -18,7 +19,7 @@ function App() {
     anthropic: false,
     google: false,
   });
-  const { components, isLoading, error, generate, removeComponent, clearAll } =
+  const { components, isLoading, error, streamingState, generateStream, removeComponent, clearAll } =
     useComponentGenerator();
 
   useEffect(() => {
@@ -35,7 +36,7 @@ function App() {
       alert(`${PROVIDER_CONFIG[provider].label} API 키를 입력하거나 .env에 설정해주세요.`);
       return;
     }
-    generate(prompt, apiKey || undefined, provider);
+    generateStream(prompt, apiKey || undefined, provider);
   };
 
   const handleProviderChange = (newProvider: Provider) => {
@@ -160,7 +161,7 @@ function App() {
           </div>
         )}
 
-        {isLoading && (
+        {isLoading && !streamingState && (
           <div className="loading-card">
             <div className="loading-pulse" />
             <p>컴포넌트를 생성하고 있습니다...</p>
@@ -168,6 +169,9 @@ function App() {
         )}
 
         <div className="results-grid">
+          {streamingState && (
+            <StreamingCard streamingState={streamingState} />
+          )}
           {components.map((component) => (
             <ComponentCard
               key={component.id}
