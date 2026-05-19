@@ -1,6 +1,19 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { GeneratedComponent, Provider } from '../types';
 
+const STORAGE_KEY = 'rcg-components';
+
+function isValidComponent(c: unknown): c is Omit<GeneratedComponent, 'createdAt'> & { createdAt: string } {
+  return (
+    typeof c === 'object' &&
+    c !== null &&
+    typeof (c as Record<string, unknown>).id === 'string' &&
+    typeof (c as Record<string, unknown>).prompt === 'string' &&
+    typeof (c as Record<string, unknown>).code === 'string' &&
+    typeof (c as Record<string, unknown>).createdAt === 'string'
+  );
+}
+
 interface UseComponentGeneratorReturn {
   components: GeneratedComponent[];
   isLoading: boolean;
@@ -13,10 +26,13 @@ interface UseComponentGeneratorReturn {
 export function useComponentGenerator(): UseComponentGeneratorReturn {
   const [components, setComponents] = useState<GeneratedComponent[]>(() => {
     try {
-      const stored = localStorage.getItem('rcg-components');
+      const stored = localStorage.getItem(STORAGE_KEY);
       if (!stored) return [];
-      const parsed = JSON.parse(stored) as Array<Omit<GeneratedComponent, 'createdAt'> & { createdAt: string }>;
-      return parsed.map((c) => ({ ...c, createdAt: new Date(c.createdAt) }));
+      const parsed: unknown[] = JSON.parse(stored);
+      if (!Array.isArray(parsed)) return [];
+      return parsed
+        .filter(isValidComponent)
+        .map((c) => ({ ...c, createdAt: new Date(c.createdAt) }));
     } catch {
       return [];
     }
@@ -25,7 +41,11 @@ export function useComponentGenerator(): UseComponentGeneratorReturn {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    localStorage.setItem('rcg-components', JSON.stringify(components));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(components));
+    } catch {
+      // quota 초과 등 쓰기 실패 시 무시 — 읽기는 정상 동작 유지
+    }
   }, [components]);
 
   const generate = useCallback(async (prompt: string, apiKey: string | undefined, provider: Provider) => {
