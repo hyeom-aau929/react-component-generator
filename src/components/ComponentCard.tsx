@@ -11,10 +11,12 @@ interface ComponentCardProps {
 }
 
 type Tab = 'preview' | 'code';
+type ViewportSize = 'mobile' | 'tablet' | 'desktop';
 
 export function ComponentCard({ component, onRemove, onRegenerate, isLoading }: ComponentCardProps) {
   const [activeTab, setActiveTab] = useState<Tab>('preview');
   const [previewKey, setPreviewKey] = useState(0);
+  const [viewportSize, setViewportSize] = useState<ViewportSize>('desktop');
   const createdAt = component.createdAt.toLocaleTimeString('ko-KR', {
     hour: '2-digit',
     minute: '2-digit',
@@ -52,22 +54,49 @@ export function ComponentCard({ component, onRemove, onRegenerate, isLoading }: 
         </div>
       </div>
       <div className="card-tabs">
-        <button
-          className={`tab ${activeTab === 'preview' ? 'tab--active' : ''}`}
-          onClick={() => setActiveTab('preview')}
-        >
-          미리보기
-        </button>
-        <button
-          className={`tab ${activeTab === 'code' ? 'tab--active' : ''}`}
-          onClick={() => setActiveTab('code')}
-        >
-          코드
-        </button>
+        <div className="card-tabs-main">
+          <button
+            className={`tab ${activeTab === 'preview' ? 'tab--active' : ''}`}
+            onClick={() => setActiveTab('preview')}
+          >
+            미리보기
+          </button>
+          <button
+            className={`tab ${activeTab === 'code' ? 'tab--active' : ''}`}
+            onClick={() => setActiveTab('code')}
+          >
+            코드
+          </button>
+        </div>
+        {activeTab === 'preview' && (
+          <div className="viewport-controls">
+            <button
+              className={`viewport-btn ${viewportSize === 'mobile' ? 'viewport-btn--active' : ''}`}
+              onClick={() => setViewportSize('mobile')}
+              title="모바일 (375px)"
+            >
+              모바일
+            </button>
+            <button
+              className={`viewport-btn ${viewportSize === 'tablet' ? 'viewport-btn--active' : ''}`}
+              onClick={() => setViewportSize('tablet')}
+              title="태블릿 (768px)"
+            >
+              태블릿
+            </button>
+            <button
+              className={`viewport-btn ${viewportSize === 'desktop' ? 'viewport-btn--active' : ''}`}
+              onClick={() => setViewportSize('desktop')}
+              title="데스크탑"
+            >
+              데스크탑
+            </button>
+          </div>
+        )}
       </div>
       <div className="card-content">
         {activeTab === 'preview' ? (
-          <LivePreview key={previewKey} code={component.code} />
+          <LivePreview key={previewKey} code={component.code} viewportSize={viewportSize} />
         ) : (
           <CodeView code={component.code} />
         )}

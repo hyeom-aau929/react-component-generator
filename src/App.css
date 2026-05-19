@@ -795,10 +795,17 @@
 
 .card-tabs {
   display: flex;
+  align-items: center;
   gap: 6px;
   padding: 10px;
   background: linear-gradient(135deg, rgba(236, 72, 153, 0.03), rgba(139, 92, 246, 0.03));
   border-bottom: 1.5px solid var(--line);
+}
+
+.card-tabs-main {
+  display: flex;
+  gap: 6px;
+  flex: 1;
 }
 
 .tab {
@@ -830,6 +837,48 @@
 
 @media (prefers-color-scheme: dark) {
   .tab--active {
+    background: rgba(26, 40, 71, 0.6);
+  }
+}
+
+.viewport-controls {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding-left: 10px;
+  border-left: 1.5px solid var(--line);
+  margin-left: 4px;
+}
+
+.viewport-btn {
+  height: 32px;
+  padding: 0 10px;
+  background: transparent;
+  border: 1.5px solid transparent;
+  border-radius: 7px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.viewport-btn:hover {
+  color: var(--primary);
+  border-color: rgba(236, 72, 153, 0.2);
+}
+
+.viewport-btn--active {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: 0 2px 8px rgba(236, 72, 153, 0.15);
+}
+
+@media (prefers-color-scheme: dark) {
+  .viewport-btn--active {
     background: rgba(26, 40, 71, 0.6);
   }
 }
@@ -899,6 +948,11 @@
   .preview-render {
     background: linear-gradient(135deg, #1a2847 0%, #243454 100%);
   }
+}
+
+.preview-viewport-wrapper {
+  width: 100%;
+  transition: max-width 0.3s ease;
 }
 
 .preview-error {
@@ -1068,5 +1122,16 @@
   /* 모바일 최적화 추가 */
   .card-tabs {
     gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .viewport-controls {
+    padding-left: 0;
+    border-left: none;
+    margin-left: 0;
+    border-top: 1.5px solid var(--line);
+    padding-top: 6px;
+    width: 100%;
+    justify-content: center;
   }
 }
