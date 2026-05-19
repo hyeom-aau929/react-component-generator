@@ -938,7 +938,11 @@
   justify-content: center;
   align-items: center;
   padding: 34px;
-  background: #ffffff !important;
+  background-color: #f8fafc;
+  background-image:
+    linear-gradient(#e2e8f0 1px, transparent 1px),
+    linear-gradient(90deg, #e2e8f0 1px, transparent 1px);
+  background-size: 28px 28px;
   border: none;
   border-radius: 0;
   position: relative;
@@ -946,7 +950,11 @@
 
 @media (prefers-color-scheme: dark) {
   .preview-render {
-    background: linear-gradient(135deg, #1a2847 0%, #243454 100%);
+    background-color: #1a2847;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 28px 28px;
   }
 }
 
