@@ -1064,4 +1064,9 @@
   .prompt-examples {
     grid-template-columns: 1fr;
   }
+
+  /* 모바일 최적화 추가 */
+  .card-tabs {
+    gap: 4px;
+  }
 }
